@@ -1,12 +1,18 @@
 package pt.isel.projetoeseminario
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.Ndef
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -63,15 +69,94 @@ import pt.isel.projetoeseminario.ui.useroperations.signup.SignUpScreen
 import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 import pt.isel.projetoeseminario.viewModels.UserViewModel
 
+
 class MainActivity : ComponentActivity() {
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
+    private var nfcAdapter: NfcAdapter? = null
 
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, String::class.java)
-            Log.d("TAG", "READ TAG ${intent.data}")
+    private fun enableNfcForegroundDispatch() {
+        nfcAdapter?.let { adapter ->
+            if (adapter.isEnabled) {
+                val nfcIntentFilter = arrayOf(
+                    IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED),
+                    IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED),
+                    IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)
+                )
+
+                val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.getActivity(
+                        this,
+                        0,
+                        Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                        PendingIntent.FLAG_MUTABLE
+                    )
+                } else {
+                    PendingIntent.getActivity(
+                        this,
+                        0,
+                        Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                }
+                adapter.enableForegroundDispatch(
+                    this, pendingIntent, nfcIntentFilter, null
+                )
+            }
+        }
+    }
+
+    private fun disableNfcForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        enableNfcForegroundDispatch()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        disableNfcForegroundDispatch()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.let { nfcIntent ->
+            handleNfcIntent(nfcIntent)
+        }
+    }
+
+    private fun handleNfcIntent(intent: Intent?) {
+        Log.d("TAG_PROJETOSEMINARIO", "Entered Handle ${intent?.action}")
+        if (intent != null && NfcAdapter.ACTION_TAG_DISCOVERED == intent.action) {
+            // Get the NDEF messages from the intent
+            Log.d("TAG_PROJETOSEMINARIO", "Inside IF")
+            val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+            if (tag != null) {
+                val tagId = tag.id
+                val hexString = tagId.joinToString(separator = "") { byte -> "%02X".format(byte) }
+                Log.d("TAG_PROJETOSEMINARIO", "NFC Tag ID detected: $hexString")
+                Toast.makeText(this, "NFC Tag ID: $hexString", Toast.LENGTH_LONG).show()
+            }
+        } else if (intent != null && NfcAdapter.ACTION_TECH_DISCOVERED == intent.action) {
+            Log.d("TAG_PROJETOSEMINARIO", "ENTERED ELSE.")
+
+            val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+            if (tag != null) {
+                val ndef = Ndef.get(tag)
+                if (ndef != null) {
+                    val ndefMessage = ndef.cachedNdefMessage
+                    if (ndefMessage != null) {
+                        for (record in ndefMessage.records) {
+                            val payload = String(record.payload)
+                            Log.d("TAG_PROJETOSEMINARIO", "NFC Tag detected: $payload")
+                            Toast.makeText(this, "NFC Tag: $payload", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } else {
+                    Log.d("TAG_PROJETOSEMINARIO", "NFC Tag detected, but not an NDEF tag.")
+                }
+            }
         }
     }
 
@@ -81,6 +166,7 @@ class MainActivity : ComponentActivity() {
         val userViewModel: UserViewModel by viewModels()
         val registoViewModel: RegistoViewModel by viewModels()
         val sharedPreferences: SharedPreferences = application.getSharedPreferences("users", Context.MODE_PRIVATE)
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this)?.let { it }
 
         setContent {
             LaunchedEffect(Unit) {
