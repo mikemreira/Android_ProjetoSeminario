@@ -9,6 +9,7 @@ data class RegistoOutputModel(
     val nome_obra: String
 )
 
+
 data class UserRegisterOutputModel(
     val registers: List<RegistoOutputModel>
 )
@@ -20,4 +21,9 @@ data class RegistoPostOutputModel(
 data class RegistoInputModel(
     val time: LocalDateTime,
     val obraId: Int
+)
+
+data class RegistoByNFCInputModel(
+    val time: LocalDateTime,
+    val nfcId: String
 )

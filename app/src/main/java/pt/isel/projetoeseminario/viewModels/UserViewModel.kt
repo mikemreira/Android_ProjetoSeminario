@@ -104,7 +104,8 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
 
             service.getUserConstructions(token) { response ->
                 if (response == null)
-                    _fetchProfileState.value = FetchState.Error("Could not fetch construction details")
+                    _fetchProfileState.value =
+                        FetchState.Error("Could not fetch construction details")
                 else
                     _fetchProfileState.value = FetchState.Success()
                 _fetchObraResult.postValue(response)

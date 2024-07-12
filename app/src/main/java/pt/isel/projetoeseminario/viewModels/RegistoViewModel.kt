@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import pt.isel.projetoeseminario.model.RegistoOutputModel
 import pt.isel.projetoeseminario.model.RegistoPostOutputModel
 import pt.isel.projetoeseminario.model.UserRegisterOutputModel
 import pt.isel.projetoeseminario.services.RegistoService
@@ -36,6 +35,20 @@ class RegistoViewModel: ViewModel() {
                     _fetchDataState.value = FetchState.Success()
                 }
                 _fetchRegistersResult.postValue(response)
+            }
+        }
+    }
+
+    fun addRegisterNFC(token: String, time: LocalDateTime, nfcId: String) {
+        viewModelScope.launch {
+            _postDataState.value = FetchState.Loading
+            registosService.addRegisterNFC(token, time, nfcId) { response ->
+                if (response == null) {
+                    _postDataState.value = FetchState.Error("Could not add register")
+                } else {
+                    _postDataState.value = FetchState.Success()
+                }
+                _postDataResult.postValue(response)
             }
         }
     }

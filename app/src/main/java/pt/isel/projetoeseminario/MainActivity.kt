@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
@@ -16,7 +15,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -68,11 +66,14 @@ import pt.isel.projetoeseminario.ui.useroperations.profile.PerfilScreen
 import pt.isel.projetoeseminario.ui.useroperations.signup.SignUpScreen
 import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 import pt.isel.projetoeseminario.viewModels.UserViewModel
+import java.time.LocalDateTime
 
 
 class MainActivity : ComponentActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
+    private val userViewModel: UserViewModel by viewModels()
+    private val registoViewModel: RegistoViewModel by viewModels()
 
     private fun enableNfcForegroundDispatch() {
         nfcAdapter?.let { adapter ->
@@ -130,11 +131,13 @@ class MainActivity : ComponentActivity() {
         Log.d("TAG_PROJETOSEMINARIO", "Entered Handle ${intent?.action}")
         if (intent != null && NfcAdapter.ACTION_TAG_DISCOVERED == intent.action) {
             // Get the NDEF messages from the intent
+
             Log.d("TAG_PROJETOSEMINARIO", "Inside IF")
             val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
             if (tag != null) {
                 val tagId = tag.id
                 val hexString = tagId.joinToString(separator = "") { byte -> "%02X".format(byte) }
+                registoViewModel.addRegisterNFC("T6xL4IuHKSgHNkqgQlD7W21UCu_SEP48NmW3T4QQpzo=", LocalDateTime.now(), hexString )
                 Log.d("TAG_PROJETOSEMINARIO", "NFC Tag ID detected: $hexString")
                 Toast.makeText(this, "NFC Tag ID: $hexString", Toast.LENGTH_LONG).show()
             }
@@ -163,8 +166,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val userViewModel: UserViewModel by viewModels()
-        val registoViewModel: RegistoViewModel by viewModels()
         val sharedPreferences: SharedPreferences = application.getSharedPreferences("users", Context.MODE_PRIVATE)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)?.let { it }
 

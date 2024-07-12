@@ -2,6 +2,7 @@ package pt.isel.projetoeseminario.services
 
 import android.util.Log
 import pt.isel.projetoeseminario.http.RetrofitClient
+import pt.isel.projetoeseminario.model.RegistoByNFCInputModel
 import pt.isel.projetoeseminario.model.RegistoInputModel
 import pt.isel.projetoeseminario.model.RegistoOutputModel
 import pt.isel.projetoeseminario.model.RegistoPostOutputModel
@@ -29,6 +30,25 @@ class RegistoService {
 
             override fun onFailure(call: Call<UserRegisterOutputModel>, t: Throwable) {
                 Log.d("REGISTER", "${t.message} at least was successful")
+                onResult(null)
+            }
+        })
+    }
+
+    fun addRegisterNFC(token: String, time: LocalDateTime, nfcId: String, onResult: (RegistoPostOutputModel?) -> Unit) {
+        val call = instance.addRegisterNFC(token, RegistoByNFCInputModel(time, nfcId))
+
+        call.enqueue(object : Callback<RegistoPostOutputModel> {
+            override fun onResponse(
+                call: Call<RegistoPostOutputModel>,
+                response: Response<RegistoPostOutputModel>
+            ) {
+                Log.d("REGISTER", response.code().toString())
+                Log.d("REGISTER", "${response.body().toString()} at least was successful")
+                onResult(response.body())
+            }
+
+            override fun onFailure(call: Call<RegistoPostOutputModel>, t: Throwable) {
                 onResult(null)
             }
         })
