@@ -1,6 +1,7 @@
 package pt.isel.projetoeseminario.ui.home
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -25,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,12 +43,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import pt.isel.projetoeseminario.model.Obra
 import pt.isel.projetoeseminario.model.ObrasOutputModel
+import pt.isel.projetoeseminario.ui.error.NotFoundErrorScreen
 import pt.isel.projetoeseminario.viewModels.FetchState
 import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 import pt.isel.projetoeseminario.viewModels.UserViewModel
@@ -54,11 +60,16 @@ import java.time.LocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel, token: String, onHomeScreen: () -> Unit) {
-    val fetchObrasState = userViewModel.fetchProfileState.collectAsState()
+    val fetchObrasState = userViewModel.fetchObrasState.collectAsState()
+    val fetchProfileState = userViewModel.fetchProfileState.collectAsState()
     val fetchObrasResult = userViewModel.fetchObraResult.value
+    val postDataState = registerViewModel.postDataState.collectAsState()
+    var nfcToggled by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        onHomeScreen()
+    LaunchedEffect(fetchObrasState) {
+        if (fetchObrasState.value !is FetchState.Success) {
+            onHomeScreen()
+        }
     }
 
     var expanded by remember { mutableStateOf(false) }
@@ -68,8 +79,10 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (fetchObrasState.value == FetchState.Loading) CircularProgressIndicator()
+        if (fetchObrasState.value is FetchState.Loading || fetchProfileState.value is FetchState.Loading || fetchObrasState.value is FetchState.Idle || fetchProfileState.value is FetchState.Idle) CircularProgressIndicator()
         else {
+            if (postDataState.value is FetchState.Success) Toast.makeText(LocalContext.current, "O seu registo foi efetuado com sucesso.", Toast.LENGTH_SHORT).show().also { registerViewModel.resetState() }
+            else if (postDataState.value is FetchState.Error) Toast.makeText(LocalContext.current, "Nao foi possível efetuar o seu registo.", Toast.LENGTH_SHORT).show().also { registerViewModel.resetState() }
             Box {
                 if (fetchObrasResult != null) {
                     var selected by remember { mutableStateOf(fetchObrasResult.obras[0]) }
@@ -88,6 +101,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                                         0xFF7FCB78
                                     )
                                 ),
+                                enabled = postDataState.value !is FetchState.Loading,
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(text = "Entrada")
@@ -102,6 +116,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                                         0xFFF5DF68
                                     )
                                 ),
+                                enabled = postDataState.value !is FetchState.Loading,
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(text = "Saída")
@@ -135,8 +150,44 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                             }
                         }
                     }
+                } else {
+                    Log.d("PASSING", "PASSING IN ELSE")
+                    NotFoundErrorScreen()
                 }
             }
+            if (nfcToggled)
+                AlertDialog(
+                    onDismissRequest = { nfcToggled = false },
+                    title = { Text(text = "NFC Scan") },
+                    text = { Text("Passe o seu telemóvel na tag NFC para efetuar o seu registo.", textAlign = TextAlign.Center) },
+                    icon = { Icon(imageVector = Icons.Default.Nfc, contentDescription = null) },
+                    dismissButton = {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                            Button(
+                                onClick = { nfcToggled = false },
+                                modifier = Modifier.align(Alignment.Center)
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    },
+                    confirmButton = { }
+                )
+            if (fetchObrasResult != null)
+                FloatingActionButton(
+                    onClick = {
+                        nfcToggled = true
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Nfc, // Replace with the actual NFC icon
+                        contentDescription = "NFC Scan"
+                    )
+                }
         }
     }
 }

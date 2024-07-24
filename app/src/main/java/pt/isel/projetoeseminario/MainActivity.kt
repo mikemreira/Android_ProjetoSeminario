@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -65,6 +66,9 @@ import pt.isel.projetoeseminario.viewModels.UserViewModel
 
 class MainActivity : ComponentActivity() {
 
+    private val userViewModel: UserViewModel by viewModels()
+    private val registoViewModel: RegistoViewModel by viewModels()
+
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -78,8 +82,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val userViewModel: UserViewModel by viewModels()
-        val registoViewModel: RegistoViewModel by viewModels()
         val sharedPreferences: SharedPreferences = application.getSharedPreferences("users", Context.MODE_PRIVATE)
 
         setContent {
@@ -121,7 +123,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                     val scope = rememberCoroutineScope()
-                    var selectedItemIndex by rememberSaveable {
+                    var selectedItemIndex by remember {
                         mutableIntStateOf(0)
                     }
                     val navController = rememberNavController()

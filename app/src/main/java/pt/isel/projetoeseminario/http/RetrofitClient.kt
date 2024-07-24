@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://10.0.2.2:8080"
+    private const val BASE_URL = "http://10.0.2.2:8080"//"https://spring-api-ps-isel-spring-app-api.azuremicroservices.io"//"http://10.0.2.2:8080"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

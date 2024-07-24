@@ -1,6 +1,7 @@
 package pt.isel.projetoeseminario.viewModels
 
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -66,5 +67,10 @@ class RegistoViewModel: ViewModel() {
                 _postDataResult.postValue(response)
             }
         }
+    }
+
+    fun resetState() {
+        _postDataState.value = FetchState.Idle
+        _fetchDataState.value = FetchState.Idle
     }
 }

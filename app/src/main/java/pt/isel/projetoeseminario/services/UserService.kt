@@ -2,6 +2,7 @@ package pt.isel.projetoeseminario.services
 
 import android.util.Log
 import pt.isel.projetoeseminario.http.RetrofitClient
+import pt.isel.projetoeseminario.model.ImageOutputModel
 import pt.isel.projetoeseminario.model.ObrasOutputModel
 import pt.isel.projetoeseminario.model.UserAuthInputModel
 import pt.isel.projetoeseminario.model.UserLoginInputModel
@@ -62,6 +63,23 @@ class UserService {
             }
 
             override fun onFailure(call: Call<UserOutputModel>, t: Throwable) {
+                Log.d("BODY", "I FAILED ${t.message}")
+                onResult(null)
+            }
+        })
+    }
+
+    fun getUserImage(token: String, onResult: (ImageOutputModel?) -> Unit) {
+        val call = instance.getUserImage("Bearer $token", "thumbnail")
+        call.enqueue(object : Callback<ImageOutputModel> {
+            override fun onResponse(
+                call: Call<ImageOutputModel>,
+                response: Response<ImageOutputModel>
+            ) {
+                onResult(response.body())
+            }
+
+            override fun onFailure(call: Call<ImageOutputModel>, t: Throwable) {
                 onResult(null)
             }
         })

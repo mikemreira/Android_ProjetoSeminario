@@ -1,5 +1,7 @@
 package pt.isel.projetoeseminario.ui.useroperations.profile
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,30 +23,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.intellij.lang.annotations.RegExp
 import pt.isel.projetoeseminario.R
 import pt.isel.projetoeseminario.model.Obra
 import pt.isel.projetoeseminario.model.ObrasOutputModel
 import pt.isel.projetoeseminario.viewModels.FetchState
 import pt.isel.projetoeseminario.viewModels.UserViewModel
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 @Composable
 fun PerfilScreen(viewModel: UserViewModel, token: String) {
     val fetchProfileState = viewModel.fetchProfileState.collectAsState()
+    val fetchImageState = viewModel.fetchImageState.collectAsState()
     val fetchResult = viewModel.fetchProfileResult.value
     val fetchObraResult = viewModel.fetchObraResult.value
+    val fetchImageResult = viewModel.fetchImageResult.value
 
-    LaunchedEffect(key1 = token) {
+    LaunchedEffect(Unit) {
         viewModel.getUserDetails(token)
     }
 
     Surface(color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (fetchProfileState.value == FetchState.Loading) CircularProgressIndicator()
+            if (fetchProfileState.value is FetchState.Loading || fetchProfileState.value is FetchState.Idle) CircularProgressIndicator()
             else {
                 Column(
                     modifier = Modifier
@@ -53,7 +61,7 @@ fun PerfilScreen(viewModel: UserViewModel, token: String) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    ProfileImage(imageResource = R.drawable.builder)
+                    if (fetchImageState.value is FetchState.Loading) CircularProgressIndicator() else ProfileImage(bitmap = fetchImageResult?.foto)
                     ProfileInfo(title = "Username", value = fetchResult?.nome ?: "Default")
                     ProfileInfo(title = "E-mail", value = fetchResult?.email ?: "Default")
                     Log.d("OBRA", fetchObraResult?.obras.toString())
@@ -81,22 +89,38 @@ fun ProfileInfo(title: String, value: String) {
     }
 }
 
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
-fun ProfileImage(imageResource: Int) {
-    Image(
-        painter = painterResource(id = imageResource),
-        contentDescription = null,
-        modifier = Modifier
-            .size(120.dp)
-            .background(Color.LightGray, shape = CircleShape)
-            .clip(CircleShape)
-            .border(2.dp, Color.DarkGray, CircleShape)
-            .padding(4.dp),
-        contentScale = ContentScale.Crop
-    )
-}
+fun ProfileImage(bitmap: String?) {
+    if (bitmap != null) {
+        val imageBytes = Base64.decode(bitmap.substringAfter("base64,", ""))
+        Log.d("IMAGEBYTES", imageBytes.toString())
+        val bmp: Bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
-data class CardItem(val title: String, val description: String)
+        Image(
+            bitmap = bmp.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier
+                .size(120.dp)
+                .background(Color.LightGray, shape = CircleShape)
+                .clip(CircleShape)
+                .border(2.dp, Color.DarkGray, CircleShape)
+                .padding(4.dp),
+            contentScale = ContentScale.Crop
+        )
+    } else
+        Image(
+            painterResource(id = R.drawable.builder),
+            contentDescription = null,
+            modifier = Modifier
+                .size(120.dp)
+                .background(Color.LightGray, shape = CircleShape)
+                .clip(CircleShape)
+                .border(2.dp, Color.DarkGray, CircleShape)
+                .padding(4.dp),
+            contentScale = ContentScale.Crop
+        )
+}
 
 @Composable
 fun HorizontalCardSlider(cardItems: ObrasOutputModel) {

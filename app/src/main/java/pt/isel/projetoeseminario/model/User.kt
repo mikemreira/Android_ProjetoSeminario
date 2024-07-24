@@ -1,11 +1,5 @@
 package pt.isel.projetoeseminario.model
 
-import android.graphics.Bitmap
-
-data class User(
-    val id: Int
-)
-
 data class UserLoginInputModel(
     val email: String,
     val password: String
@@ -13,6 +7,10 @@ data class UserLoginInputModel(
 
 data class UserLoginOutputModel(
     val token: String
+)
+
+data class ImageOutputModel(
+    val foto: String
 )
 
 data class UserSignupInputModel(
@@ -28,7 +26,6 @@ data class UserSignupOutputModel(
 data class UserOutputModel(
     val nome: String,
     val email: String,
-    //val foto: Bitmap
 )
 
 data class UserAuthInputModel(

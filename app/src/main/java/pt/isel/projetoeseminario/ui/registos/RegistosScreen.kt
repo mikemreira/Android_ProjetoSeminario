@@ -48,14 +48,13 @@ fun RegistosScreen(viewModel: RegistoViewModel, token: String) {
     val fetchRegistersState = viewModel.fetchDataState.collectAsState()
     val fetchRegistersResult = viewModel.fetchRegistersResult.value
 
-    LaunchedEffect(key1 = token) {
-        Log.d("REGISTER", "Register = $token")
+    LaunchedEffect(Unit) {
         viewModel.getUserRegisters("Bearer $token")
     }
 
     Surface(color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (fetchRegistersState.value == FetchState.Loading) CircularProgressIndicator()
+            if (fetchRegistersState.value is FetchState.Loading || fetchRegistersState.value is FetchState.Idle) CircularProgressIndicator()
             else {
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -102,8 +101,9 @@ fun TimeEntryItem(entry: RegistoOutputModel) {
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
+                            val time = entry.entrada
                             Text(
-                                text = entry.entrada.toString(),
+                                text = "${time.dayOfMonth}-${if(time.monthValue < 10) "0${time.monthValue}" else time.monthValue}-${time.year} ${time.hour}:${time.minute}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -121,8 +121,9 @@ fun TimeEntryItem(entry: RegistoOutputModel) {
                             Column(
                                 modifier = Modifier.padding(16.dp)
                             ) {
+                                val time = entry.saida
                                 Text(
-                                    text = entry.saida.toString(),
+                                    text = "${time.dayOfMonth}-${if(time.monthValue < 10) "0${time.monthValue}" else time.monthValue}-${time.year} ${time.hour}:${time.minute}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
