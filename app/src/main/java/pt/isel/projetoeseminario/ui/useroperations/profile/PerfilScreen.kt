@@ -33,6 +33,7 @@ import org.intellij.lang.annotations.RegExp
 import pt.isel.projetoeseminario.R
 import pt.isel.projetoeseminario.model.Obra
 import pt.isel.projetoeseminario.model.ObrasOutputModel
+import pt.isel.projetoeseminario.ui.error.NotFoundErrorScreen
 import pt.isel.projetoeseminario.viewModels.FetchState
 import pt.isel.projetoeseminario.viewModels.UserViewModel
 import kotlin.io.encoding.Base64
@@ -42,32 +43,38 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 fun PerfilScreen(viewModel: UserViewModel, token: String) {
     val fetchProfileState = viewModel.fetchProfileState.collectAsState()
     val fetchImageState = viewModel.fetchImageState.collectAsState()
-    val fetchResult = viewModel.fetchProfileResult.value
-    val fetchObraResult = viewModel.fetchObraResult.value
-    val fetchImageResult = viewModel.fetchImageResult.value
+    val fetchResult = viewModel.fetchProfileResult.collectAsState()
+    val fetchObraResult = viewModel.fetchObraResult.collectAsState()
+    val fetchImageResult = viewModel.fetchImageResult.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.getUserDetails(token)
+        viewModel.getUserObras(token)
     }
 
     Surface(color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (fetchProfileState.value is FetchState.Loading || fetchProfileState.value is FetchState.Idle) CircularProgressIndicator()
-            else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (fetchImageState.value is FetchState.Loading) CircularProgressIndicator() else ProfileImage(bitmap = fetchImageResult?.foto)
-                    ProfileInfo(title = "Username", value = fetchResult?.nome ?: "Default")
-                    ProfileInfo(title = "E-mail", value = fetchResult?.email ?: "Default")
-                    Log.d("OBRA", fetchObraResult?.obras.toString())
-                    if (fetchObraResult != null)
-                        HorizontalCardSlider(cardItems = fetchObraResult)
-                }
+            when (fetchProfileState.value) {
+                is FetchState.Idle -> CircularProgressIndicator()
+                is FetchState.Loading -> CircularProgressIndicator()
+                is FetchState.Error -> NotFoundErrorScreen()
+                is FetchState.Success ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        if (fetchImageState.value is FetchState.Loading) CircularProgressIndicator() else ProfileImage(
+                            bitmap = fetchImageResult.value?.foto
+                        )
+                        ProfileInfo(title = "Username", value = fetchResult.value?.nome ?: "Default")
+                        ProfileInfo(title = "E-mail", value = fetchResult.value?.email ?: "Default")
+                        if (fetchObraResult.value != null)
+                            HorizontalCardSlider(cardItems = fetchObraResult.value!!)
+
+                    }
             }
         }
     }
@@ -94,7 +101,6 @@ fun ProfileInfo(title: String, value: String) {
 fun ProfileImage(bitmap: String?) {
     if (bitmap != null) {
         val imageBytes = Base64.decode(bitmap.substringAfter("base64,", ""))
-        Log.d("IMAGEBYTES", imageBytes.toString())
         val bmp: Bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
         Image(

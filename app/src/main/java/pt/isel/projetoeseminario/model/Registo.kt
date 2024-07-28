@@ -21,3 +21,8 @@ data class RegistoInputModel(
     val time: LocalDateTime,
     val obraId: Int
 )
+
+data class RegistoByNFCInputModel(
+    val time: LocalDateTime,
+    val nfcId: String
+)

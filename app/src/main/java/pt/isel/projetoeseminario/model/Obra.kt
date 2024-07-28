@@ -10,6 +10,7 @@ data class Obra(
     val startDate: LocalDate,
     val endDate: LocalDate? = null,
     //val foto: Byte? = null,
+    val nfcId: String,
     val status: String
 )
 

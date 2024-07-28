@@ -30,9 +30,9 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
     private val service = UserService()
     private val _loginResult = MutableLiveData<UserLoginOutputModel?>()
     private val _signupResult = MutableLiveData<UserSignupOutputModel?>()
-    private val _fetchProfileResult = MutableLiveData<UserOutputModel?>()
-    private val _fetchImageResult = MutableLiveData<ImageOutputModel?>()
-    private val _fetchObraResult = MutableLiveData<ObrasOutputModel?>()
+    private val _fetchProfileResult = MutableStateFlow<UserOutputModel?>(null)
+    private val _fetchImageResult = MutableStateFlow<ImageOutputModel?>(null)
+    private val _fetchObraResult = MutableStateFlow<ObrasOutputModel?>(null)
     private val _loginState = MutableStateFlow<FetchState>(FetchState.Idle)
     private val _signupState = MutableStateFlow<FetchState>(FetchState.Idle)
     private val _fetchProfileState = MutableStateFlow<FetchState>(FetchState.Idle)
@@ -40,9 +40,9 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
     private val _fetchObrasState = MutableStateFlow<FetchState>(FetchState.Idle)
     val loginResult: LiveData<UserLoginOutputModel?> = _loginResult
     val signupResult: LiveData<UserSignupOutputModel?> = _signupResult
-    val fetchProfileResult: LiveData<UserOutputModel?> = _fetchProfileResult
-    val fetchImageResult: LiveData<ImageOutputModel?> = _fetchImageResult
-    val fetchObraResult: LiveData<ObrasOutputModel?> = _fetchObraResult
+    val fetchProfileResult: StateFlow<UserOutputModel?> = _fetchProfileResult
+    val fetchImageResult: StateFlow<ImageOutputModel?> = _fetchImageResult
+    val fetchObraResult: StateFlow<ObrasOutputModel?> = _fetchObraResult
     val loginState: StateFlow<FetchState> = _loginState
     val signupState: StateFlow<FetchState> = _signupState
     val fetchProfileState: StateFlow<FetchState> = _fetchProfileState
@@ -96,22 +96,13 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
         viewModelScope.launch {
             _fetchProfileState.value = FetchState.Loading
             _fetchImageState.value = FetchState.Loading
-            _fetchObrasState.value = FetchState.Loading
             service.getUserDetails(token) { response ->
                 Log.d("OKHTTP", response.toString())
                 if (response == null) {
                     _fetchProfileState.value = FetchState.Error("Could not fetch user details")
-                    _fetchProfileResult.postValue(response)
-                    if (sharedPreferences.getString("user_token", null) != null) {
-                        /*with(sharedPreferences.edit()) {
-                            remove("user_token")
-                            apply()
-                        }*/
-                    }
-                    //return@getUserDetails
                 } else
                     _fetchProfileState.value = FetchState.Success()
-                _fetchProfileResult.postValue(response)
+                _fetchProfileResult.value = response
             }
 
             service.getUserImage(token) { response ->
@@ -120,18 +111,32 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
                 } else {
                     _fetchImageState.value = FetchState.Success()
                 }
-                _fetchImageResult.postValue(response)
-            }
-
-            service.getUserConstructions(token) { response ->
-                if (response == null)
-                    _fetchObrasState.value = FetchState.Error("Could not fetch construction details")
-                else {
-                    Log.d("RESPONSE", response.obras.toString())
-                    _fetchObrasState.value = FetchState.Success()
-                }
-                _fetchObraResult.postValue(response)
+                _fetchImageResult.value = response
             }
         }
+    }
+
+    fun getUserObras(token: String) {
+        Log.d("RESPONSENOW", "RAN TIMES")
+        viewModelScope.launch {
+            _fetchObrasState.value = FetchState.Loading
+            service.getUserConstructions(token) { response ->
+                if (response == null) {
+                    _fetchObrasState.value =
+                        FetchState.Error("Could not fetch construction details")
+                }
+                else {
+                    _fetchObrasState.value = FetchState.Success()
+                }
+                Log.d("RESPONSE", response?.obras.toString())
+                _fetchObraResult.value = response
+            }
+        }
+    }
+
+    fun resetState() {
+        _fetchObrasState.value = FetchState.Idle
+        _fetchImageState.value = FetchState.Idle
+        _fetchProfileState.value = FetchState.Idle
     }
 }

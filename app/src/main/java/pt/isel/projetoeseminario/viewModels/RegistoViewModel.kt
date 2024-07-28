@@ -69,6 +69,20 @@ class RegistoViewModel: ViewModel() {
         }
     }
 
+    fun addRegisterNFC(token: String, time: LocalDateTime, nfcId: String) {
+        viewModelScope.launch {
+            _postDataState.value = FetchState.Loading
+            registosService.addRegisterNFC(token, time, nfcId) { response ->
+                if (response == null) {
+                    _postDataState.value = FetchState.Error("Could not add register")
+                } else {
+                    _postDataState.value = FetchState.Success()
+                }
+                _postDataResult.postValue(response)
+            }
+        }
+    }
+
     fun resetState() {
         _postDataState.value = FetchState.Idle
         _fetchDataState.value = FetchState.Idle

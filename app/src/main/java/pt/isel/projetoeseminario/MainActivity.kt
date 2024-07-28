@@ -1,12 +1,17 @@
 package pt.isel.projetoeseminario
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.Ndef
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -63,21 +68,81 @@ import pt.isel.projetoeseminario.ui.useroperations.profile.PerfilScreen
 import pt.isel.projetoeseminario.ui.useroperations.signup.SignUpScreen
 import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 import pt.isel.projetoeseminario.viewModels.UserViewModel
+import java.time.LocalDateTime
 
 class MainActivity : ComponentActivity() {
-
     private val userViewModel: UserViewModel by viewModels()
     private val registoViewModel: RegistoViewModel by viewModels()
+    private var nfcAdapter: NfcAdapter? = null
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
+    private fun enableNfcForegroundDispatch() {
+        nfcAdapter?.let { adapter ->
+            if (adapter.isEnabled) {
+                val nfcIntentFilter = arrayOf(
+                    IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED),
+                    IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED),
+                    IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)
+                )
 
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, String::class.java)
-            Log.d("TAG", "READ TAG ${intent.data}")
+                val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.getActivity(
+                        this,
+                        0,
+                        Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                        PendingIntent.FLAG_MUTABLE
+                    )
+                } else {
+                    PendingIntent.getActivity(
+                        this,
+                        0,
+                        Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                }
+                adapter.enableForegroundDispatch(
+                    this, pendingIntent, nfcIntentFilter, null
+                )
+            }
         }
     }
+
+    private fun disableNfcForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(this)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.let { nfcIntent ->
+            handleNfcIntent(nfcIntent)
+        }
+    }
+
+    private fun handleNfcIntent(intent: Intent?) {
+        val sharedPreferences: SharedPreferences = application.getSharedPreferences("users", Context.MODE_PRIVATE)
+        if (intent != null && NfcAdapter.ACTION_TAG_DISCOVERED == intent.action) {
+            val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+            if (tag != null) {
+                val tagId = tag.id
+                val hexString = tagId.joinToString(separator = "") { byte -> "%02X".format(byte) }
+                registoViewModel.addRegisterNFC(sharedPreferences.getString("user_token", "") ?: "", LocalDateTime.now(), hexString )
+            }
+        } else if (intent != null && NfcAdapter.ACTION_TECH_DISCOVERED == intent.action) {
+            val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+            if (tag != null) {
+                val ndef = Ndef.get(tag)
+                if (ndef != null) {
+                    val ndefMessage = ndef.cachedNdefMessage
+                    if (ndefMessage != null) {
+                        for (record in ndefMessage.records) {
+                            val payload = String(record.payload)
+                            Toast.makeText(this, "NFC Tag: $payload", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,11 +150,6 @@ class MainActivity : ComponentActivity() {
         val sharedPreferences: SharedPreferences = application.getSharedPreferences("users", Context.MODE_PRIVATE)
 
         setContent {
-            LaunchedEffect(Unit) {
-                userViewModel.getUserDetails(sharedPreferences.getString("user_token", null)?: "")
-                Log.d("TOKEN", sharedPreferences.getString("user_token", null) ?: "NULL")
-            }
-
             ProjetoESeminarioTheme {
                 val items = listOf(
                     MenuItem(
@@ -163,7 +223,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         },
-                        drawerState = drawerState
+                        drawerState = drawerState,
+                        gesturesEnabled = currentRoute != "logout" && currentRoute != "signup"
                     ) {
                         Scaffold(
                             topBar = {
@@ -189,7 +250,8 @@ class MainActivity : ComponentActivity() {
                         ) {
                             NavHost(navController = navController, startDestination = if (sharedPreferences.getString("user_token", null) == null) "logout" else "home", modifier = Modifier.padding(it)) {
                                 composable("home") { HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "") {
-                                    userViewModel.getUserDetails(sharedPreferences.getString("user_token", "") ?: "")
+                                    //userViewModel.getUserDetails(sharedPreferences.getString("user_token", "") ?: "")
+                                    userViewModel.getUserObras(sharedPreferences.getString("user_token", "") ?: "".also { navController.navigate("logout") })
                                 } }
                                 composable("registos") {
                                     RegistosScreen(registoViewModel, sharedPreferences.getString("user_token", "") ?: "")

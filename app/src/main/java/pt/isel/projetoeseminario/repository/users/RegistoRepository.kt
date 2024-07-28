@@ -1,5 +1,6 @@
 package pt.isel.projetoeseminario.repository.users
 
+import pt.isel.projetoeseminario.model.RegistoByNFCInputModel
 import pt.isel.projetoeseminario.model.RegistoInputModel
 import pt.isel.projetoeseminario.model.RegistoOutputModel
 import pt.isel.projetoeseminario.model.RegistoPostOutputModel
@@ -20,4 +21,7 @@ interface RegistoRepository {
 
     @PUT("/registos")
     fun addUserRegisterSaida(@Header("Authorization") token: String, @Body registerBody: RegistoInputModel): Call<RegistoPostOutputModel>
+
+    @POST("registos/nfc")
+    fun addRegisterNFC(@Header("Authorization") token: String, @Body registerBody: RegistoByNFCInputModel): Call<RegistoPostOutputModel>
 }

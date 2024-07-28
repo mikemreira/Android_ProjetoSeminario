@@ -61,15 +61,12 @@ import java.time.LocalDateTime
 @Composable
 fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel, token: String, onHomeScreen: () -> Unit) {
     val fetchObrasState = userViewModel.fetchObrasState.collectAsState()
-    val fetchProfileState = userViewModel.fetchProfileState.collectAsState()
-    val fetchObrasResult = userViewModel.fetchObraResult.value
+    val fetchObrasResult = userViewModel.fetchObraResult.collectAsState()
     val postDataState = registerViewModel.postDataState.collectAsState()
     var nfcToggled by remember { mutableStateOf(false) }
 
-    LaunchedEffect(fetchObrasState) {
-        if (fetchObrasState.value !is FetchState.Success) {
-            onHomeScreen()
-        }
+    LaunchedEffect(Unit) {
+        userViewModel.getUserObras(token)
     }
 
     var expanded by remember { mutableStateOf(false) }
@@ -79,13 +76,15 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (fetchObrasState.value is FetchState.Loading || fetchProfileState.value is FetchState.Loading || fetchObrasState.value is FetchState.Idle || fetchProfileState.value is FetchState.Idle) CircularProgressIndicator()
+        if (fetchObrasState.value is FetchState.Loading) CircularProgressIndicator()
         else {
+            Log.d("RESPONSESTATES", "fetchobrasstate = ${fetchObrasState.value} fetchobrasresult = ${fetchObrasResult.value?.obras.toString()}")
             if (postDataState.value is FetchState.Success) Toast.makeText(LocalContext.current, "O seu registo foi efetuado com sucesso.", Toast.LENGTH_SHORT).show().also { registerViewModel.resetState() }
             else if (postDataState.value is FetchState.Error) Toast.makeText(LocalContext.current, "Nao foi possível efetuar o seu registo.", Toast.LENGTH_SHORT).show().also { registerViewModel.resetState() }
             Box {
-                if (fetchObrasResult != null) {
-                    var selected by remember { mutableStateOf(fetchObrasResult.obras[0]) }
+                val obras = fetchObrasResult.value
+                if (obras != null && fetchObrasState.value is FetchState.Success) {
+                    var selected by remember { mutableStateOf(obras.obras[0]) }
                     Column {
                         Row(
                             modifier = Modifier
@@ -143,16 +142,17 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
                         ) {
-                            fetchObrasResult.obras.forEach { label ->
+                            obras.obras.forEach { label ->
                                 DropdownMenuItem(text = { Text(text = label.name) }, onClick = {
                                     selected = label
                                 })
                             }
                         }
                     }
-                } else {
-                    Log.d("PASSING", "PASSING IN ELSE")
+                } else if (fetchObrasResult.value == null && fetchObrasState.value is FetchState.Success) {
                     NotFoundErrorScreen()
+                } else if (fetchObrasState.value !is FetchState.Success) {
+                    CircularProgressIndicator()
                 }
             }
             if (nfcToggled)
@@ -173,7 +173,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                     },
                     confirmButton = { }
                 )
-            if (fetchObrasResult != null)
+            if (fetchObrasResult.value != null)
                 FloatingActionButton(
                     onClick = {
                         nfcToggled = true
