@@ -7,7 +7,9 @@ data class RegistoOutputModel(
     val entrada: LocalDateTime,
     val saida: LocalDateTime? = null,
     val nome_obra: String
-)
+) {
+    init { require(nome_obra.isNotBlank()) }
+}
 
 data class UserRegisterOutputModel(
     val registers: List<RegistoOutputModel>

@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
     private var nfcAdapter: NfcAdapter? = null
 
     private fun enableNfcForegroundDispatch() {
+        Log.d("TAGENABLE", "ENABLED")
         nfcAdapter?.let { adapter ->
             if (adapter.isEnabled) {
                 val nfcIntentFilter = arrayOf(
@@ -107,6 +108,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun disableNfcForegroundDispatch() {
+        Log.d("TAGENABLE", "DISABLED")
         nfcAdapter?.disableForegroundDispatch(this)
     }
 
@@ -249,10 +251,9 @@ class MainActivity : ComponentActivity() {
                             }
                         ) {
                             NavHost(navController = navController, startDestination = if (sharedPreferences.getString("user_token", null) == null) "logout" else "home", modifier = Modifier.padding(it)) {
-                                composable("home") { HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "") {
-                                    //userViewModel.getUserDetails(sharedPreferences.getString("user_token", "") ?: "")
-                                    userViewModel.getUserObras(sharedPreferences.getString("user_token", "") ?: "".also { navController.navigate("logout") })
-                                } }
+                                composable("home") {
+                                    HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "", onResumeDispatch = { enableNfcForegroundDispatch() }, onCancelDispatch = { disableNfcForegroundDispatch() })
+                                }
                                 composable("registos") {
                                     RegistosScreen(registoViewModel, sharedPreferences.getString("user_token", "") ?: "")
                                 }

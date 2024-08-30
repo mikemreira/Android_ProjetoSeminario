@@ -12,7 +12,9 @@ data class Obra(
     //val foto: Byte? = null,
     val nfcId: String,
     val status: String
-)
+) {
+    init { require(name.isNotBlank() && location.isNotBlank() && description.isNotBlank()) }
+}
 
 data class ObrasOutputModel(
     val obras: List<Obra>

@@ -57,9 +57,8 @@ import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 import pt.isel.projetoeseminario.viewModels.UserViewModel
 import java.time.LocalDateTime
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel, token: String, onHomeScreen: () -> Unit) {
+fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel, token: String, onResumeDispatch: () -> Unit, onCancelDispatch: () -> Unit) {
     val fetchObrasState = userViewModel.fetchObrasState.collectAsState()
     val fetchObrasResult = userViewModel.fetchObraResult.collectAsState()
     val postDataState = registerViewModel.postDataState.collectAsState()
@@ -149,9 +148,9 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                             }
                         }
                     }
-                } else if (fetchObrasResult.value == null && fetchObrasState.value is FetchState.Success) {
+                } else if (fetchObrasResult.value == null && fetchObrasState.value !is FetchState.Loading) {
                     NotFoundErrorScreen()
-                } else if (fetchObrasState.value !is FetchState.Success) {
+                } else if (fetchObrasState.value is FetchState.Loading) {
                     CircularProgressIndicator()
                 }
             }
@@ -164,7 +163,10 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                     dismissButton = {
                         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
                             Button(
-                                onClick = { nfcToggled = false },
+                                onClick = {
+                                    nfcToggled = false
+                                    onCancelDispatch()
+                                },
                                 modifier = Modifier.align(Alignment.Center)
                             ) {
                                 Text("Cancel")
@@ -177,6 +179,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                 FloatingActionButton(
                     onClick = {
                         nfcToggled = true
+                        onResumeDispatch()
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
