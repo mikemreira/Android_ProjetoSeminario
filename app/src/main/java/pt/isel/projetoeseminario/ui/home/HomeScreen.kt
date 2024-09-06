@@ -73,6 +73,10 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
         registerViewModel.resetNfcState()
     }
 
+    LaunchedEffect(isTaggedNfc.value) {
+        nfcToggled = false
+    }
+
     var expanded by remember { mutableStateOf(false) }
     var textfieldSize by remember { mutableStateOf(Size.Zero)}
 
