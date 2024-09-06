@@ -69,8 +69,8 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
         userViewModel.getUserObras(token)
     }
 
-    LaunchedEffect(isTaggedNfc.value) {
-        nfcToggled = false
+    LaunchedEffect(nfcToggled) {
+        registerViewModel.resetNfcState()
     }
 
     var expanded by remember { mutableStateOf(false) }

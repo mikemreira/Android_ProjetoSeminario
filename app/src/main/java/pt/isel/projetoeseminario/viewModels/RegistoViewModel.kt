@@ -83,7 +83,7 @@ class RegistoViewModel: ViewModel() {
                 }
                 _postDataResult.postValue(response)
             }
-            _isTaggedNfc.value = false
+            //_isTaggedNfc.value = false
         }
     }
 
