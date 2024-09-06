@@ -62,6 +62,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
     val fetchObrasState = userViewModel.fetchObrasState.collectAsState()
     val fetchObrasResult = userViewModel.fetchObraResult.collectAsState()
     val postDataState = registerViewModel.postDataState.collectAsState()
+    val isTaggedNfc = registerViewModel.isTaggedNfc.collectAsState()
     var nfcToggled by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -154,7 +155,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                     CircularProgressIndicator()
                 }
             }
-            if (nfcToggled)
+            if (nfcToggled && !isTaggedNfc.value)
                 AlertDialog(
                     onDismissRequest = { nfcToggled = false },
                     title = { Text(text = "NFC Scan") },

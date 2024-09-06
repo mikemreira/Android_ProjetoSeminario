@@ -22,8 +22,10 @@ class RegistoViewModel: ViewModel() {
     private val _postDataState = MutableStateFlow<FetchState>(FetchState.Idle)
     private val _fetchRegistersResult = MutableStateFlow<UserRegisterOutputModel?>(null)
     private val _postDataResult = MutableLiveData<RegistoPostOutputModel?>()
+    private val _isTaggedNfc = MutableStateFlow(false)
     val fetchDataState: StateFlow<FetchState> = _fetchDataState
     val postDataState: StateFlow<FetchState> = _postDataState
+    val isTaggedNfc: StateFlow<Boolean> = _isTaggedNfc
     val fetchRegistersResult: StateFlow<UserRegisterOutputModel?> = _fetchRegistersResult
     val postDataResult: LiveData<RegistoPostOutputModel?> = _postDataResult
 
@@ -71,6 +73,7 @@ class RegistoViewModel: ViewModel() {
 
     fun addRegisterNFC(token: String, time: LocalDateTime, nfcId: String) {
         viewModelScope.launch {
+            _isTaggedNfc.value = true
             _postDataState.value = FetchState.Loading
             registosService.addRegisterNFC(token, time, nfcId) { response ->
                 if (response == null) {
@@ -78,6 +81,7 @@ class RegistoViewModel: ViewModel() {
                 } else {
                     _postDataState.value = FetchState.Success()
                 }
+                _isTaggedNfc.value = false
                 _postDataResult.postValue(response)
             }
         }

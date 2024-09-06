@@ -49,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -266,7 +267,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             NavHost(navController = navController, startDestination = if (sharedPreferences.getString("user_token", null) == null) "logout" else "home", modifier = Modifier.padding(it)) {
                                 composable("home") {
-                                    HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "", onResumeDispatch = { enableNfcForegroundDispatch(this@MainActivity) }, onCancelDispatch = { })
+                                    HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "", onResumeDispatch = { enableNfcForegroundDispatch(this@MainActivity) }, onCancelDispatch = { disableNfcForegroundDispatch(this@MainActivity) })
                                 }
                                 composable("registos") {
                                     RegistosScreen(registoViewModel, sharedPreferences.getString("user_token", "") ?: "")
