@@ -65,9 +65,12 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
     val isTaggedNfc = registerViewModel.isTaggedNfc.collectAsState()
     var nfcToggled by remember { mutableStateOf(false) }
 
-    LaunchedEffect(isTaggedNfc.value) {
-        nfcToggled = false
+    LaunchedEffect(Unit) {
         userViewModel.getUserObras(token)
+    }
+
+    LaunchedEffect(isTaggedNfc) {
+        nfcToggled = !isTaggedNfc.value
     }
 
     var expanded by remember { mutableStateOf(false) }
