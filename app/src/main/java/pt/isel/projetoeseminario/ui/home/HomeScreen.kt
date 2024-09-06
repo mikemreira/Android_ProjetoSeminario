@@ -155,7 +155,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                     CircularProgressIndicator()
                 }
             }
-            if (nfcToggled && !isTaggedNfc.value)
+            if (nfcToggled && !isTaggedNfc.value) {
                 registerViewModel.resetNfcState()
                 AlertDialog(
                     onDismissRequest = {
@@ -163,10 +163,18 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                         onCancelDispatch()
                     },
                     title = { Text(text = "NFC Scan") },
-                    text = { Text("Passe o seu telemóvel na tag NFC para efetuar o seu registo.", textAlign = TextAlign.Center) },
+                    text = {
+                        Text(
+                            "Passe o seu telemóvel na tag NFC para efetuar o seu registo.",
+                            textAlign = TextAlign.Center
+                        )
+                    },
                     icon = { Icon(imageVector = Icons.Default.Nfc, contentDescription = null) },
                     dismissButton = {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
                             Button(
                                 onClick = {
                                     nfcToggled = false
@@ -180,6 +188,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                     },
                     confirmButton = { }
                 )
+            }
             if (fetchObrasResult.value != null)
                 FloatingActionButton(
                     onClick = {
