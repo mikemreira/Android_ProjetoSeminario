@@ -156,8 +156,12 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                 }
             }
             if (nfcToggled && !isTaggedNfc.value)
+                registerViewModel.resetNfcState()
                 AlertDialog(
-                    onDismissRequest = { nfcToggled = false },
+                    onDismissRequest = {
+                        nfcToggled = false
+                        onCancelDispatch()
+                    },
                     title = { Text(text = "NFC Scan") },
                     text = { Text("Passe o seu telemóvel na tag NFC para efetuar o seu registo.", textAlign = TextAlign.Center) },
                     icon = { Icon(imageVector = Icons.Default.Nfc, contentDescription = null) },

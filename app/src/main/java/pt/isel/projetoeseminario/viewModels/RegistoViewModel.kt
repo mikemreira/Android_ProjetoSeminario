@@ -81,10 +81,14 @@ class RegistoViewModel: ViewModel() {
                 } else {
                     _postDataState.value = FetchState.Success()
                 }
-                _isTaggedNfc.value = false
+                //_isTaggedNfc.value = false
                 _postDataResult.postValue(response)
             }
         }
+    }
+
+    fun resetNfcState() {
+        _isTaggedNfc.value = false
     }
 
     fun resetState() {
