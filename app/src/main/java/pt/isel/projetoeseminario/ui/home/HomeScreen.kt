@@ -149,7 +149,7 @@ fun HomeScreen(userViewModel: UserViewModel, registerViewModel: RegistoViewModel
                         }
                     }
                 } else if (fetchObrasResult.value == null && fetchObrasState.value !is FetchState.Loading) {
-                    NotFoundErrorScreen()
+                    NotFoundErrorScreen("Could not fetch details.")
                 } else if (fetchObrasState.value is FetchState.Loading) {
                     CircularProgressIndicator()
                 }

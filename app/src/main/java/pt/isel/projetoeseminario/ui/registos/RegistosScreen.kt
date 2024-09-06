@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import pt.isel.projetoeseminario.model.RegistoOutputModel
+import pt.isel.projetoeseminario.ui.error.NotFoundErrorScreen
 import pt.isel.projetoeseminario.viewModels.FetchState
 import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 
@@ -34,7 +35,7 @@ import pt.isel.projetoeseminario.viewModels.RegistoViewModel
 @Composable
 fun RegistosScreen(viewModel: RegistoViewModel, token: String) {
     val fetchRegistersState = viewModel.fetchDataState.collectAsState()
-    val fetchRegistersResult = viewModel.fetchRegistersResult.value
+    val fetchRegistersResult = viewModel.fetchRegistersResult.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.getUserRegisters("Bearer $token")
@@ -43,18 +44,18 @@ fun RegistosScreen(viewModel: RegistoViewModel, token: String) {
     Surface(color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (fetchRegistersState.value is FetchState.Loading) CircularProgressIndicator()
-            else {
+            else if (fetchRegistersResult.value == null && fetchRegistersState.value !is FetchState.Loading) NotFoundErrorScreen("No registers at the moment.")
+            else if (fetchRegistersResult.value != null && fetchRegistersState.value is FetchState.Success) {
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (fetchRegistersResult != null)
-                        LazyColumn {
-                            items(fetchRegistersResult.registers) { entry ->
-                                TimeEntryItem(entry = entry)
-                                Spacer(modifier = Modifier.padding(16.dp))
-                            }
+                    LazyColumn {
+                        items(fetchRegistersResult.value!!.registers) { entry ->
+                            TimeEntryItem(entry = entry)
+                            Spacer(modifier = Modifier.padding(16.dp))
                         }
+                    }
                 }
             }
         }

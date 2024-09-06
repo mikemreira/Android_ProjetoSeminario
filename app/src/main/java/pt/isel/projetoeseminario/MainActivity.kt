@@ -1,5 +1,6 @@
 package pt.isel.projetoeseminario
 
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -75,8 +76,7 @@ class MainActivity : ComponentActivity() {
     private val registoViewModel: RegistoViewModel by viewModels()
     private var nfcAdapter: NfcAdapter? = null
 
-    private fun enableNfcForegroundDispatch() {
-        Log.d("TAGENABLE", "ENABLED")
+    private fun enableNfcForegroundDispatch(activity: Activity) {
         nfcAdapter?.let { adapter ->
             if (adapter.isEnabled) {
                 val nfcIntentFilter = arrayOf(
@@ -101,15 +101,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 adapter.enableForegroundDispatch(
-                    this, pendingIntent, nfcIntentFilter, null
+                    activity, pendingIntent, nfcIntentFilter, null
                 )
             }
         }
     }
 
-    private fun disableNfcForegroundDispatch() {
-        Log.d("TAGENABLE", "DISABLED")
-        nfcAdapter?.disableForegroundDispatch(this)
+    private fun disableNfcForegroundDispatch(activity: Activity) {
+        nfcAdapter?.disableForegroundDispatch(activity)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -117,6 +116,11 @@ class MainActivity : ComponentActivity() {
         intent?.let { nfcIntent ->
             handleNfcIntent(nfcIntent)
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        disableNfcForegroundDispatch(this)
     }
 
     private fun handleNfcIntent(intent: Intent?) {
@@ -150,6 +154,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val sharedPreferences: SharedPreferences = application.getSharedPreferences("users", Context.MODE_PRIVATE)
+        enableNfcForegroundDispatch(this)
 
         setContent {
             ProjetoESeminarioTheme {
@@ -252,7 +257,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             NavHost(navController = navController, startDestination = if (sharedPreferences.getString("user_token", null) == null) "logout" else "home", modifier = Modifier.padding(it)) {
                                 composable("home") {
-                                    HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "", onResumeDispatch = { enableNfcForegroundDispatch() }, onCancelDispatch = { disableNfcForegroundDispatch() })
+                                    HomeScreen(userViewModel, registoViewModel, sharedPreferences.getString("user_token", "") ?: "", onResumeDispatch = { }, onCancelDispatch = { disableNfcForegroundDispatch(this@MainActivity) })
                                 }
                                 composable("registos") {
                                     RegistosScreen(registoViewModel, sharedPreferences.getString("user_token", "") ?: "")

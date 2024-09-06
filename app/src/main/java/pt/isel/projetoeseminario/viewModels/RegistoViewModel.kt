@@ -20,11 +20,11 @@ class RegistoViewModel: ViewModel() {
 
     private val _fetchDataState = MutableStateFlow<FetchState>(FetchState.Idle)
     private val _postDataState = MutableStateFlow<FetchState>(FetchState.Idle)
-    private val _fetchRegistersResult = MutableLiveData<UserRegisterOutputModel?>()
+    private val _fetchRegistersResult = MutableStateFlow<UserRegisterOutputModel?>(null)
     private val _postDataResult = MutableLiveData<RegistoPostOutputModel?>()
     val fetchDataState: StateFlow<FetchState> = _fetchDataState
     val postDataState: StateFlow<FetchState> = _postDataState
-    val fetchRegistersResult: LiveData<UserRegisterOutputModel?> = _fetchRegistersResult
+    val fetchRegistersResult: StateFlow<UserRegisterOutputModel?> = _fetchRegistersResult
     val postDataResult: LiveData<RegistoPostOutputModel?> = _postDataResult
 
     fun getUserRegisters(token: String) {
@@ -36,7 +36,7 @@ class RegistoViewModel: ViewModel() {
                 } else {
                     _fetchDataState.value = FetchState.Success()
                 }
-                _fetchRegistersResult.postValue(response)
+                _fetchRegistersResult.value = response
             }
         }
     }

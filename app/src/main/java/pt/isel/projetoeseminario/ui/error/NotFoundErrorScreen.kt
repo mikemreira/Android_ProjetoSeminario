@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import pt.isel.projetoeseminario.R
 
 @Composable
-fun NotFoundErrorScreen() {
+fun NotFoundErrorScreen(message: String = "") {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -49,7 +49,7 @@ fun NotFoundErrorScreen() {
         )
 
         Text(
-            text = "No items yet",
+            text = message,
             style = MaterialTheme.typography.headlineMedium,
             color = Color.Black,
             textAlign = TextAlign.Center,
