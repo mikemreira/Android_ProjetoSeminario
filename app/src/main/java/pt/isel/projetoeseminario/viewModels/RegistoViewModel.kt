@@ -81,9 +81,9 @@ class RegistoViewModel: ViewModel() {
                 } else {
                     _postDataState.value = FetchState.Success()
                 }
-                //_isTaggedNfc.value = false
                 _postDataResult.postValue(response)
             }
+            _isTaggedNfc.value = false
         }
     }
 
